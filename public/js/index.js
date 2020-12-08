@@ -82,9 +82,11 @@ const onDeleteClick = (evt) => {
     }
     
     // Remover a tarefa do array
-    destroy(id).then(
-        () => render(tarefas);
-    );    
+    destroy( id ).then (
+        () => { 
+            render(tarefas) 
+        }
+    )
 }
 
 const onCheckClick = evt => {
@@ -93,7 +95,7 @@ const onCheckClick = evt => {
     let id = Number(evt.target.id.replace('chk_',''));
 
     //Alterar status da tarefa no servidor
-    updateFeito(id).then (
+    updateFeito( id ).then (
         () => {
             evt.target.parentNode.parentNode.classList.toggle('done');
         }
