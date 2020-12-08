@@ -1,3 +1,5 @@
+const { response } = require("express");
+
 // Declarando variável global para armazenar tarefas;
 let tarefas = [];
 
@@ -80,11 +82,9 @@ const onDeleteClick = (evt) => {
     }
     
     // Remover a tarefa do array
-    destroy(id);
-
-    // Renderizar a lista novamente
-    render(tarefas);
-    
+    destroy(id).then(
+        () => render(tarefas);
+    );    
 }
 
 const onCheckClick = evt => {
@@ -92,16 +92,47 @@ const onCheckClick = evt => {
     // capturando o id da tarefa clicada
     let id = Number(evt.target.id.replace('chk_',''));
 
-    // Levantar tarefa do id capturado
+    //Alterar status da tarefa no servidor
+    updateFeito(id).then (
+        () => {
+            evt.target.parentNode.parentNode.classList.toggle('done');
+        }
+    )
+
+}
+
+const updateFeito = async (id) => {
+    //capturar a tarefa do id dado
     let tarefa = tarefas.find(t => t.id == id);
 
-    // alterar o campo feito
-    tarefa.feito = !tarefa.feito;
+    //verificar se a tarefa foi feita ou nao
+    let rota;
+    if (!tarefa.feito) {
+        rota = `/tarefas/feito/${id}`
+    } else {
+        rota = `/tarefas/desfeito/${id}`
+    }
 
-    // Alterando a classe da tr que contem o td que contem o checkbox;
-    evt.target.parentNode.parentNode.classList.toggle('done');
-    
-}
+    //se tarefa foi feita, disparar req PUT para rota /tarefas/desfeito/:id
+    let response = await fetch (rota,
+        {
+            method: "PUT",
+            headers: 
+            {
+                "Authorization": `bearer ${sessionStorage.getItem('token')}`
+            }
+        }
+    )
+
+    let msg = response.JSON()
+
+    //em recebendo a resposta do server, atualizar o status da tarefa no array de tarefas
+    if (msg) 
+    {
+        tarefa.feito = !tarefa.feito
+    }
+}   
+
 
 /**
  * Criar função create(texto,prioridade) que recebe um texto e prioridade como parâmetros
@@ -135,8 +166,22 @@ const onCheckClick = evt => {
   * Criar uma função destroy que recebne o id de uma tarefa como parâmetro
   * e remove essa tarefa do array  * 
   */
-const destroy = (id) => {
-    tarefas = tarefas.filter(t => t.id != id);
+const destroy = async (id) => {
+
+    let reponse = await fetch(`/tarefas/${id}`,{
+        method:"DELETE",
+        headers: {
+            "Authorization": `bearer ${sessionStorage.getItem('token')}`
+        }
+    })
+
+    let msg = response.json()
+
+    if (msg){
+        tarefas = tarefas.filter(t => t.id != id);
+    }
+
+    
 }
 
 // Capturar elementos importantes da página
